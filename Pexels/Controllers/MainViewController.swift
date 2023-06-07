@@ -7,14 +7,26 @@
 
 import UIKit
 
-class MainViewController: UIViewController, UISearchBarDelegate {
+class MainViewController: UIViewController, UISearchBarDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
+    
     
     let layout                  = UICollectionViewFlowLayout()
     var searchHistoryCollectionView     : UICollectionView!
     var contentCollectionView   : UICollectionView!
     let searchBar               = UISearchBar()
+    let identifier = "PhotoCollectionViewCell"
     
+    var searchPhotosResponse: SearchPhotosResponse? {
+        didSet {
+            DispatchQueue.main.async {
+                self.contentCollectionView.reloadData()
+            }
+        }
+    }
     
+    var photos: [Photo] {
+        return searchPhotosResponse?.photos ?? []
+    }
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -24,7 +36,13 @@ class MainViewController: UIViewController, UISearchBarDelegate {
         generateSearchBar()
         generateSearchHistoryCollectionView()
         generateContentCollectionView()
+        
         searchBar.delegate = self
+        
+        contentCollectionView.contentInset = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4)
+        contentCollectionView.register(PhotoCollectionViewCell.self, forCellWithReuseIdentifier: identifier)
+        contentCollectionView.dataSource = self
+        contentCollectionView.delegate = self
     }
     
     func generateSearchHistoryCollectionView() {
@@ -33,7 +51,8 @@ class MainViewController: UIViewController, UISearchBarDelegate {
         
         searchHistoryCollectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
         view.addSubview(searchHistoryCollectionView)
-        
+        layout.minimumInteritemSpacing = 4
+        layout.minimumLineSpacing = 4
 //        searchHistoryCollectionView.backgroundColor = .yellow
         
         searchHistoryCollectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -146,6 +165,7 @@ class MainViewController: UIViewController, UISearchBarDelegate {
 //                print("Search Photos endpoint jsonObject - \(jsonObject) ")
                 let searchPhotosResponse = try JSONDecoder().decode(SearchPhotosResponse.self, from: data)
                 print("Search Photos endpoint searchPhotosResponse - \(searchPhotosResponse)")
+                self.searchPhotosResponse = searchPhotosResponse
                 
             } catch let error {
                 print("Search Photos endpoint serialization error - \(error.localizedDescription)")
@@ -178,6 +198,70 @@ class MainViewController: UIViewController, UISearchBarDelegate {
         search()
     }
     
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        1
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return photos.count
+    }
+    
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = contentCollectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath) as! PhotoCollectionViewCell
+        return cell
+    }
 }
         
 
+class PhotoCollectionViewCell: UICollectionViewCell {
+    
+    static let identifier: String = "PhotoCollectionViewCell"
+    
+    let photoImageView = UIImageView()
+    let originalImage = UIImage(named: "image_placeholder")
+    
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        contentView.addSubview(photoImageView)
+        
+        photoImageView.contentMode = .scaleAspectFill
+        
+        
+        photoImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            photoImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
+            photoImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: 0),
+            photoImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
+            photoImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0)
+        ])
+        
+        // поставили image в ImageView
+        originalImage?.withRenderingMode(.alwaysTemplate)
+        photoImageView.image = originalImage
+        photoImageView.tintColor = .lightGray
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+// MARK: это подробнее изучить
+
+extension MainViewController: UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
+        let flowLayout: UICollectionViewFlowLayout? = collectionViewLayout as? UICollectionViewFlowLayout
+        let horizontalSpacing: CGFloat = (flowLayout?.minimumInteritemSpacing ?? 0) + collectionView.contentInset.left + collectionView.contentInset.right
+        let width: CGFloat = ( collectionView.frame.width - horizontalSpacing) / 2
+        let height: CGFloat = width
+        
+        return CGSize(width: width, height: height)
+        
+    }
+}

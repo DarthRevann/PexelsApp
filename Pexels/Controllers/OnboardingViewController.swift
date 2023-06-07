@@ -39,7 +39,7 @@ class OnboardingViewController: UIViewController {
         generateNextButton()
         generatePageControl()
         
-        //        view.backgroundColor = .yellow
+//                view.backgroundColor = .systemRed
     }
     
     
@@ -60,7 +60,7 @@ class OnboardingViewController: UIViewController {
         
         view.addSubview(collectionView)
         print("Salam")
-        //        collectionView.backgroundColor = .white
+//                collectionView.backgroundColor = .yellow
         
         collectionView.contentMode = .center
         collectionView.delaysContentTouches = true
