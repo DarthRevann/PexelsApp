@@ -53,6 +53,7 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         view.addSubview(searchHistoryCollectionView)
         layout.minimumInteritemSpacing = 4
         layout.minimumLineSpacing = 4
+        
 //        searchHistoryCollectionView.backgroundColor = .yellow
         
         searchHistoryCollectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -105,8 +106,8 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         
             contentCollectionView.topAnchor.constraint(equalTo: searchHistoryCollectionView.bottomAnchor),
             contentCollectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            contentCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            contentCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+            contentCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            contentCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
         
         ])
         
@@ -130,7 +131,7 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         
         let parameters = [
             URLQueryItem(name: "query", value: searchText),
-            URLQueryItem(name: "per_page", value: "10")
+            URLQueryItem(name: "per_page", value: "100")
         ]
         
         urlComponents.queryItems = parameters
@@ -209,14 +210,17 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = contentCollectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath) as! PhotoCollectionViewCell
+        cell.setup(photo: self.photos[indexPath.item])
         return cell
     }
 }
         
-
+// создаем ячейку с фото
 class PhotoCollectionViewCell: UICollectionViewCell {
     
     static let identifier: String = "PhotoCollectionViewCell"
+    
+    var photo: Photo?
     
     let photoImageView = UIImageView()
     let originalImage = UIImage(named: "image_placeholder")
@@ -227,7 +231,7 @@ class PhotoCollectionViewCell: UICollectionViewCell {
         
         contentView.addSubview(photoImageView)
         
-        photoImageView.contentMode = .scaleAspectFill
+        photoImageView.contentMode = .scaleToFill
         
         
         photoImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -248,6 +252,46 @@ class PhotoCollectionViewCell: UICollectionViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    func setup(photo: Photo) {
+        
+        self.photo = photo
+        
+        let mediumPhotoURLString: String = photo.src.medium
+        guard let mediumPhotoURL = URL(string: mediumPhotoURLString) else {
+            print("Couldn't create URL with given mediumPhotoURLString: \(mediumPhotoURLString)")
+            return
+        }
+        
+        let dataTask = URLSession.shared.dataTask(with: mediumPhotoURL, completionHandler: imageLoadCompletionHandler(data:urlResponse:error:))
+        dataTask.resume()
+    }
+    
+    func imageLoadCompletionHandler(data: Data?, urlResponse: URLResponse?, error: Error? ) {
+        
+        if let error = error {
+            
+            print("Error loading image - \(error.localizedDescription)")
+            
+        } else if let data = data {
+            
+            guard let currentPhotoURL = self.photo?.src.medium , let responseURL = urlResponse?.url?.absoluteString else {
+                print("Current photo url OR Response url are absent")
+                return
+            }
+            
+            guard currentPhotoURL == responseURL else {
+                print("ATTENTION! currentPhotoURL and responseURL are different!")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.photoImageView.image = UIImage(data: data)
+            }
+            
+        }
+        
+    }
 }
 
 // MARK: это подробнее изучить
@@ -257,7 +301,7 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
         let flowLayout: UICollectionViewFlowLayout? = collectionViewLayout as? UICollectionViewFlowLayout
-        let horizontalSpacing: CGFloat = (flowLayout?.minimumInteritemSpacing ?? 0) + collectionView.contentInset.left + collectionView.contentInset.right
+        let horizontalSpacing: CGFloat = (flowLayout?.minimumInteritemSpacing ?? 0) + contentCollectionView.contentInset.left + contentCollectionView.contentInset.right
         let width: CGFloat = ( collectionView.frame.width - horizontalSpacing) / 2
         let height: CGFloat = width
         
