@@ -9,12 +9,13 @@ import UIKit
 
 class MainViewController: UIViewController, UISearchBarDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
     
-    
-    let layout                  = UICollectionViewFlowLayout()
-    var searchHistoryCollectionView     : UICollectionView!
-    var contentCollectionView   : UICollectionView!
-    let searchBar               = UISearchBar()
-    let identifier = "PhotoCollectionViewCell"
+    let historyLayout                 = UICollectionViewFlowLayout()
+    let contentLayout                 = UICollectionViewFlowLayout()
+    var searchHistoryCollectionView   : UICollectionView!
+    var contentCollectionView         : UICollectionView!
+    let searchBar                     = UISearchBar()
+    let identifier                    = "PhotoCollectionViewCell"
+    let id                            = "SearchTextCollectionViewCell"
     
     var searchPhotosResponse: SearchPhotosResponse? {
         didSet {
@@ -40,27 +41,40 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         searchBar.delegate = self
         
         contentCollectionView.contentInset = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4)
+        
+        // отображение содержимого contentCollectionView
         contentCollectionView.register(PhotoCollectionViewCell.self, forCellWithReuseIdentifier: identifier)
         contentCollectionView.dataSource = self
         contentCollectionView.delegate = self
+        contentCollectionView.refreshControl = UIRefreshControl()
+        contentCollectionView.refreshControl?.addTarget(self, action: #selector(search), for: .valueChanged)
+        
+        
+        // SearchTextCollectionView отображение содержимого
+        searchHistoryCollectionView.register(SearchTextCollectionViewCell.self, forCellWithReuseIdentifier: id)
+        searchHistoryCollectionView.dataSource = self
+        
+        let flowLayout = searchHistoryCollectionView.collectionViewLayout as? UICollectionViewFlowLayout
+        flowLayout?.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
     }
     
     func generateSearchHistoryCollectionView() {
         
         print("Story CollectionView implemented")
         
-        searchHistoryCollectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
-        view.addSubview(searchHistoryCollectionView)
-        layout.minimumInteritemSpacing = 4
-        layout.minimumLineSpacing = 4
+        searchHistoryCollectionView = UICollectionView(frame: view.bounds, collectionViewLayout: historyLayout)
+
+        historyLayout.scrollDirection = .horizontal
+        searchHistoryCollectionView.showsHorizontalScrollIndicator = false
+        searchHistoryCollectionView.contentInset = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
         
-//        searchHistoryCollectionView.backgroundColor = .yellow
+        view.addSubview(searchHistoryCollectionView)
         
         searchHistoryCollectionView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate( [
         
-            searchHistoryCollectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            searchHistoryCollectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 10),
             searchHistoryCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             searchHistoryCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             searchHistoryCollectionView.heightAnchor.constraint(equalToConstant: 60)
@@ -95,8 +109,11 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         
         print("Content Collection View implemented")
         
-        contentCollectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
-//        contentCollectionView.backgroundColor = .systemPink
+        contentCollectionView = UICollectionView(frame: view.bounds, collectionViewLayout: contentLayout)
+
+        contentLayout.scrollDirection = .vertical
+        contentLayout.minimumInteritemSpacing = 4
+        contentLayout.minimumLineSpacing = 4
         contentCollectionView.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(contentCollectionView)
@@ -104,7 +121,7 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         
         NSLayoutConstraint.activate([
         
-            contentCollectionView.topAnchor.constraint(equalTo: searchHistoryCollectionView.bottomAnchor),
+            contentCollectionView.topAnchor.constraint(equalTo: searchHistoryCollectionView.bottomAnchor, constant: 10),
             contentCollectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             contentCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             contentCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
@@ -112,7 +129,10 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         ])
         
     }
-    func search() {
+    @objc func search() {
+        
+        self.searchPhotosResponse = nil
+        
         guard let searchText = searchBar.text else {
             print("Search bar text is nil")
             return
@@ -147,6 +167,10 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
         let APIKey: String = "gtsRO3haMsH5ZTp5yvPjQol26jEvkecSMjiC6xlg0DlYj6pbdQdxNB1Y"
         urlRequest.addValue(APIKey, forHTTPHeaderField: "Authorization")
         
+        if contentCollectionView.refreshControl?.isRefreshing == false {
+            contentCollectionView.refreshControl?.beginRefreshing()
+        }
+        
         let urlSession: URLSession = URLSession(configuration: .default)
         let dataTask: URLSessionDataTask = urlSession.dataTask(with: urlRequest, completionHandler: searchPhotosHandler(data: urlResponse: error:))
         
@@ -155,6 +179,12 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
     
     func searchPhotosHandler(data: Data?, urlResponse: URLResponse?, error: Error?) {
         print("Method searchPhotosHandler was called")
+        
+        DispatchQueue.main.async {
+            if self.contentCollectionView.refreshControl?.isRefreshing == true {
+                self.contentCollectionView.refreshControl?.endRefreshing()
+            }
+        }
         
         if let error = error {
             print("Search Photos endpoint error - \(error.localizedDescription)")
@@ -200,18 +230,39 @@ class MainViewController: UIViewController, UISearchBarDelegate, UICollectionVie
     }
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        1
+        return 1
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photos.count
+
+        // так как у меня две ячейки, я сделал проверку, чтобы на каждую ячейку отображалось именно ее содержимое:
+        switch collectionView {
+        case contentCollectionView:
+            return photos.count
+            
+        case searchHistoryCollectionView:
+            return 5
+            
+        default:
+            return 0
+        }
     }
     
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = contentCollectionView.dequeueReusableCell(withReuseIdentifier: identifier, for: indexPath) as! PhotoCollectionViewCell
-        cell.setup(photo: self.photos[indexPath.item])
-        return cell
+      
+        switch collectionView {
+        case contentCollectionView:
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoCollectionViewCell.identifier, for: indexPath) as! PhotoCollectionViewCell
+            cell.setup(photo: self.photos[indexPath.item])
+            return cell
+        case searchHistoryCollectionView:
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchTextCollectionViewCell.id, for: indexPath) as! SearchTextCollectionViewCell
+            return cell
+        default:
+            return UICollectionViewCell()
+    
+        }
     }
 }
         
@@ -224,10 +275,25 @@ class PhotoCollectionViewCell: UICollectionViewCell {
     
     let photoImageView = UIImageView()
     let originalImage = UIImage(named: "image_placeholder")
+    let activityIndicatorView = UIActivityIndicatorView()
     
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
+        contentView.addSubview(activityIndicatorView)
+        activityIndicatorView.hidesWhenStopped = true
+        activityIndicatorView.style = .medium
+        activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+        
+            activityIndicatorView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            activityIndicatorView.centerYAnchor.constraint(equalTo: centerYAnchor)
+            
+        ])
+        
+        
         
         contentView.addSubview(photoImageView)
         
@@ -263,11 +329,21 @@ class PhotoCollectionViewCell: UICollectionViewCell {
             return
         }
         
+        self.activityIndicatorView.startAnimating()
+        
         let dataTask = URLSession.shared.dataTask(with: mediumPhotoURL, completionHandler: imageLoadCompletionHandler(data:urlResponse:error:))
         dataTask.resume()
     }
     
     func imageLoadCompletionHandler(data: Data?, urlResponse: URLResponse?, error: Error? ) {
+        
+        if urlsAreSame(responseURL: urlResponse?.url?.absoluteString) {
+            
+            DispatchQueue.main.async {
+                self.activityIndicatorView.stopAnimating()
+            }
+            
+        }
         
         if let error = error {
             
@@ -275,13 +351,7 @@ class PhotoCollectionViewCell: UICollectionViewCell {
             
         } else if let data = data {
             
-            guard let currentPhotoURL = self.photo?.src.medium , let responseURL = urlResponse?.url?.absoluteString else {
-                print("Current photo url OR Response url are absent")
-                return
-            }
-            
-            guard currentPhotoURL == responseURL else {
-                print("ATTENTION! currentPhotoURL and responseURL are different!")
+            guard urlsAreSame(responseURL: urlResponse?.url?.absoluteString) else {
                 return
             }
             
@@ -292,7 +362,22 @@ class PhotoCollectionViewCell: UICollectionViewCell {
         }
         
     }
+    
+    func urlsAreSame(responseURL: String?) -> Bool {
+        
+        guard let currentPhotoURL = self.photo?.src.medium , let responseURL = responseURL else {
+            print("Current photo url OR Response url are absent")
+            return false
+        }
+        
+        guard currentPhotoURL == responseURL else {
+            print("ATTENTION! currentPhotoURL and responseURL are different!")
+            return false
+        }
+        return true
+    } 
 }
+
 
 // MARK: это подробнее изучить
 
@@ -306,6 +391,16 @@ extension MainViewController: UICollectionViewDelegateFlowLayout {
         let height: CGFloat = width
         
         return CGSize(width: width, height: height)
+        
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        let photo = self.photos[indexPath.item]
+        let url = photo.src.large2X
+        
+        let vc = ImageScrollViewController(imageURL: url)
+        self.navigationController?.pushViewController(vc, animated: true)
         
     }
 }

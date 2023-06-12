@@ -16,6 +16,8 @@
 		F6758E0929E24B9000DE458D /* OnboardingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6758E0729E24B9000DE458D /* OnboardingViewController.swift */; };
 		F6758E0A29E24B9000DE458D /* OnboardingViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = F6758E0829E24B9000DE458D /* OnboardingViewController.xib */; };
 		F6758E3029EE196200DE458D /* Roboto-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F6758E1F29EE196200DE458D /* Roboto-Light.ttf */; };
+		F6987D7A2A3255DF00320890 /* ImageScrollViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6987D792A3255DF00320890 /* ImageScrollViewController.swift */; };
+		F6987D7C2A32646300320890 /* SearchTextCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6987D7B2A32646300320890 /* SearchTextCollectionViewCell.swift */; };
 		F6F83D6A2A1CE8E6002C9DE0 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F83D692A1CE8E6002C9DE0 /* MainViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +33,8 @@
 		F6758E0729E24B9000DE458D /* OnboardingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewController.swift; sourceTree = "<group>"; };
 		F6758E0829E24B9000DE458D /* OnboardingViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = OnboardingViewController.xib; sourceTree = "<group>"; };
 		F6758E1F29EE196200DE458D /* Roboto-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Roboto-Light.ttf"; sourceTree = "<group>"; };
+		F6987D792A3255DF00320890 /* ImageScrollViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageScrollViewController.swift; sourceTree = "<group>"; };
+		F6987D7B2A32646300320890 /* SearchTextCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchTextCollectionViewCell.swift; sourceTree = "<group>"; };
 		F6F83D692A1CE8E6002C9DE0 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,6 +86,7 @@
 				F6758E0829E24B9000DE458D /* OnboardingViewController.xib */,
 				F6758E0729E24B9000DE458D /* OnboardingViewController.swift */,
 				F6F83D692A1CE8E6002C9DE0 /* MainViewController.swift */,
+				F6987D792A3255DF00320890 /* ImageScrollViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -107,6 +112,7 @@
 		F6758E1429EB97FC00DE458D /* Cells */ = {
 			isa = PBXGroup;
 			children = (
+				F6987D7B2A32646300320890 /* SearchTextCollectionViewCell.swift */,
 			);
 			path = Cells;
 			sourceTree = "<group>";
@@ -202,8 +208,10 @@
 				F60689BC2A0BF96D00EFB4C6 /* OnboardingModel.swift in Sources */,
 				F6758DF429E24AA700DE458D /* AppDelegate.swift in Sources */,
 				F6758E0929E24B9000DE458D /* OnboardingViewController.swift in Sources */,
+				F6987D7C2A32646300320890 /* SearchTextCollectionViewCell.swift in Sources */,
 				F65D7C782A308DD6009AADB3 /* SearchPhotosResponse.swift in Sources */,
 				F6758DF629E24AA700DE458D /* SceneDelegate.swift in Sources */,
+				F6987D7A2A3255DF00320890 /* ImageScrollViewController.swift in Sources */,
 				F6F83D6A2A1CE8E6002C9DE0 /* MainViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
