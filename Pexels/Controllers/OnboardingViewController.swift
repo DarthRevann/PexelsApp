@@ -139,8 +139,6 @@ class OnboardingViewController: UIViewController {
             nextButton.widthAnchor.constraint(equalTo: skipButton.widthAnchor, multiplier: 1.2)
         ])
         
-//        nextButton.configuration?.cornerStyle = .capsule
-        // add target to action for our button
         
         nextButton.addTarget(self, action: #selector(nextButtonClicked), for: .touchUpInside)
         
@@ -213,11 +211,14 @@ class OnboardingViewController: UIViewController {
         
         let mainVC = MainViewController()
         let navC = UINavigationController(rootViewController: mainVC)
+        
         present(navC, animated: true)
         
+//        navigationController?.pushViewController(navC, animated: true)
         
-        view.window?.rootViewController = navC
-        view.window?.makeKeyAndVisible()
+        
+//        view.window?.rootViewController = navC
+//        view.window?.makeKeyAndVisible()
 
         
     }
